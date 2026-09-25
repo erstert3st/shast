@@ -4,7 +4,10 @@ go 1.27.1
 
 tool honnef.co/go/tools/cmd/staticcheck
 
-require github.com/charmbracelet/x/ansi v0.11.8
+require (
+	github.com/charmbracelet/x/ansi v0.11.8
+	go.yaml.in/yaml/v3 v3.0.5
+)
 
 require (
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect

@@ -1,0 +1,546 @@
+# Challenge catalog. Every entry is one command the player types.
+#
+#   id:            unique, [a-z0-9-], also the name of expected/<id>.txt
+#   command:       printable ASCII, one line, max 120 characters. Written as a
+#                  literal block (|-) so quotes need no escaping.
+#   category:      files|search|text|json|archive|git|permissions|disk|
+#                  process|network-config|system
+#   difficulty:    easy|medium|hard
+#   explanation:   one or two short sentences, shown after execution
+#   deterministic: optional, default true; false if the output changes
+#                  between runs (excluded from Reverse mode)
+#   compare:       optional, { ignore_order: true } for unstable line order
+#   exit_code:     optional, default 0; expected exit code
+#   allow_empty:   optional, default false; empty output is accepted
+#
+# Commands run with bash in /work (the seeded project) as user dev, without
+# network. The workspace is reset before every command, so destructive
+# commands are fine as long as they print something.
+
+# --- files ------------------------------------------------------------------
+
+- id: list-configs-long
+  command: |-
+    ls -lA configs
+  category: files
+  difficulty: easy
+  explanation: "Long listing of configs/ including hidden files like .env: permissions, owner, size and modification time."
+
+- id: tree-app
+  command: |-
+    tree -L 2 app
+  category: files
+  difficulty: easy
+  explanation: "Shows the directory structure of app/ two levels deep."
+
+- id: remove-scratch-dirs
+  command: |-
+    rm -rf tmp cache && ls
+  category: files
+  difficulty: easy
+  explanation: "Recursively deletes tmp/ and cache/ without prompting, then lists what is left."
+
+- id: mkdir-brace-expansion
+  command: |-
+    mkdir -p releases/v2/{bin,conf,logs} && find releases | sort
+  category: files
+  difficulty: medium
+  explanation: "Brace expansion turns one path into three; mkdir -p creates all missing parent directories."
+
+- id: files-newer-than-config
+  command: |-
+    find . -type f -newer configs/app.yaml -not -path './.git/*' | sort
+  category: files
+  difficulty: medium
+  explanation: "Lists files modified more recently than configs/app.yaml, skipping the git internals."
+
+- id: diff-config-change
+  command: |-
+    diff configs/app.yaml <(sed 's/8080/9090/' configs/app.yaml)
+  category: files
+  difficulty: medium
+  exit_code: 1
+  explanation: "Compares the config with an edited copy made by process substitution. diff exits with 1 when the inputs differ."
+
+- id: script-line-report
+  command: |-
+    for f in app/scripts/*.sh; do echo "$f: $(wc -l < "$f") lines"; done
+  category: files
+  difficulty: hard
+  explanation: "Loops over all shell scripts and prints the line count of each using command substitution."
+
+# --- search -----------------------------------------------------------------
+
+- id: grep-todo-src
+  command: |-
+    grep -rn TODO app/src
+  category: search
+  difficulty: easy
+  compare: { ignore_order: true }
+  explanation: "Searches app/src recursively for TODO and prints file name and line number of every match."
+
+- id: find-python-no-tests
+  command: |-
+    find . -name '*.py' -not -path './app/tests/*' | sort
+  category: search
+  difficulty: easy
+  explanation: "Finds all Python files except the tests; -not -path excludes a directory pattern."
+
+- id: grep-ignore-case
+  command: |-
+    grep -i 'timed out' logs/error.log
+  category: search
+  difficulty: easy
+  explanation: "Case-insensitive search for timeout messages in the nginx error log."
+
+- id: todo-fixme-python
+  command: |-
+    grep -rn --include='*.py' -E 'TODO|FIXME' app
+  category: search
+  difficulty: medium
+  compare: { ignore_order: true }
+  explanation: "Recursive search limited to *.py files, matching either TODO or FIXME via an extended regex."
+
+- id: count-server-errors
+  command: |-
+    grep -cE '" 50[0-9] ' logs/access.log
+  category: search
+  difficulty: medium
+  explanation: "Counts access log lines with a 5xx status; the leading quote anchors the match to the status field."
+
+- id: todo-count-per-file
+  command: |-
+    grep -rlZ TODO app | xargs -0 grep -c TODO | sort
+  category: search
+  difficulty: hard
+  explanation: "grep -lZ lists matching files NUL-separated, xargs -0 passes them safely to a second grep that counts matches per file."
+
+# --- text -------------------------------------------------------------------
+
+- id: log-level-counts
+  command: |-
+    awk '{print $2}' logs/app.log | sort | uniq -c
+  category: text
+  difficulty: easy
+  explanation: "Extracts the log level column and counts how often each level occurs."
+
+- id: sed-line-range
+  command: |-
+    sed -n '10,15p' logs/app.log
+  category: text
+  difficulty: easy
+  explanation: "Prints only lines 10 to 15; -n suppresses the default output of every line."
+
+- id: csv-as-table
+  command: |-
+    head -n 6 data/users.csv | column -t -s,
+  category: text
+  difficulty: easy
+  explanation: "Formats the first rows of a CSV file as an aligned table."
+
+- id: top-client-ips
+  command: |-
+    awk '{print $1}' logs/access.log | sort | uniq -c | sort -rn | head -5
+  category: text
+  difficulty: medium
+  explanation: "Counts requests per client IP and shows the five busiest. The classic sort | uniq -c | sort -rn pipeline."
+
+- id: users-per-role
+  command: |-
+    tail -n +2 data/users.csv | cut -d, -f4 | sort | uniq -c | sort -rn
+  category: text
+  difficulty: medium
+  explanation: "Skips the CSV header, cuts out the role column and counts users per role."
+
+- id: sed-in-place
+  command: |-
+    sed -i 's/8080/9090/' configs/app.yaml && grep -n 9090 configs/app.yaml
+  category: text
+  difficulty: medium
+  explanation: "Edits the file in place with sed -i, then shows the changed line with its line number."
+
+- id: failing-endpoints
+  command: |-
+    awk '$9 >= 500 {print $7}' logs/access.log | sort | uniq -c | sort -rn | head -5
+  category: text
+  difficulty: hard
+  explanation: "Filters requests with a 5xx status in awk and ranks the affected paths."
+
+- id: avg-response-size
+  command: |-
+    awk '{sum += $10} END {printf "%.1f bytes\n", sum / NR}' logs/access.log
+  category: text
+  difficulty: hard
+  explanation: "Sums the response size column and prints the average in the END block; NR is the number of lines read."
+
+# --- json -------------------------------------------------------------------
+
+- id: count-orders
+  command: |-
+    jq length data/orders.json
+  category: json
+  difficulty: easy
+  explanation: "Prints the number of elements in the top-level JSON array."
+
+- id: server-names
+  command: |-
+    jq -r '.[].name' data/servers.json
+  category: json
+  difficulty: easy
+  explanation: "Iterates over the array and prints each name; -r outputs raw strings without quotes."
+
+- id: unhealthy-servers
+  command: |-
+    jq -r '.[] | select(.status != "up") | "\(.name) \(.status)"' data/servers.json
+  category: json
+  difficulty: medium
+  explanation: "Keeps only servers that are not up and prints name and status using string interpolation."
+
+- id: servers-table
+  command: |-
+    jq -r '.[] | [.name, .ip, .role] | @tsv' data/servers.json | column -t
+  category: json
+  difficulty: medium
+  explanation: "Builds one tab-separated row per server with @tsv and aligns the columns."
+
+- id: orders-by-status
+  command: |-
+    jq -c 'group_by(.status)[] | {status: .[0].status, count: length}' data/orders.json
+  category: json
+  difficulty: hard
+  explanation: "Groups the orders by status and emits one compact object per group with its size."
+
+- id: revenue-sum
+  command: |-
+    jq '.[].total' data/orders.json | paste -sd+ | bc
+  category: json
+  difficulty: hard
+  explanation: "Extracts all order totals, joins them with + into one expression and lets bc add them exactly."
+
+- id: top-memory-servers
+  command: |-
+    jq -r 'sort_by(-.mem_gb) | .[:3][] | "\(.name) \(.mem_gb)GB"' data/servers.json
+  category: json
+  difficulty: hard
+  explanation: "Sorts servers by memory, descending, and prints the three largest."
+
+# --- archive ----------------------------------------------------------------
+
+- id: count-rotated-lines
+  command: |-
+    zcat logs/access.log.1.gz | wc -l
+  category: archive
+  difficulty: easy
+  explanation: "Counts the lines of a rotated, gzipped log without unpacking it to disk."
+
+- id: peek-backup
+  command: |-
+    zcat backups/db-2025-03-14.sql.gz | head -n 5
+  category: archive
+  difficulty: easy
+  explanation: "Shows the beginning of a compressed database dump."
+
+- id: tar-configs
+  command: |-
+    tar -czf configs.tgz configs && tar -tzf configs.tgz | sort
+  category: archive
+  difficulty: medium
+  explanation: "Creates a gzip-compressed tarball of configs/ and lists its contents."
+
+- id: zip-scripts
+  command: |-
+    zip -qr scripts.zip app/scripts && unzip -l scripts.zip
+  category: archive
+  difficulty: medium
+  explanation: "Zips the scripts directory quietly and lists the archive with sizes and dates."
+
+- id: tar-pipe-copy
+  command: |-
+    mkdir restore && tar -cf - app/scripts | tar -xf - -C restore && find restore | sort
+  category: archive
+  difficulty: hard
+  explanation: "Streams a tar archive through a pipe and unpacks it elsewhere, a classic way to copy trees with all metadata."
+
+- id: backup-line-counts
+  command: |-
+    for f in backups/*.gz; do echo "$f $(zcat "$f" | wc -l)"; done
+  category: archive
+  difficulty: hard
+  explanation: "Loops over all compressed backups and prints the uncompressed line count of each."
+
+# --- git --------------------------------------------------------------------
+
+- id: git-log-oneline
+  command: |-
+    git log --oneline
+  category: git
+  difficulty: easy
+  explanation: "Shows the commit history with abbreviated hashes, one commit per line."
+
+- id: git-status-after-edit
+  command: |-
+    echo '# note' >> README.md && git status --short
+  category: git
+  difficulty: easy
+  explanation: "Appends a line to a tracked file; git status --short marks it as modified with M."
+
+- id: git-grep-todo
+  command: |-
+    git grep -n TODO
+  category: git
+  difficulty: easy
+  explanation: "Searches only files tracked by git, much faster than grep -r in big repositories."
+
+- id: git-show-stat
+  command: |-
+    git show --stat HEAD
+  category: git
+  difficulty: medium
+  explanation: "Shows the latest commit with a summary of changed files instead of the full diff."
+
+- id: git-log-format
+  command: |-
+    git log --format='%h %ad %s' --date=short -5
+  category: git
+  difficulty: medium
+  explanation: "Prints the last five commits with a custom format: short hash, date and subject."
+
+- id: git-stash
+  command: |-
+    echo 'x' >> Makefile && git stash && git stash list
+  category: git
+  difficulty: hard
+  explanation: "Saves uncommitted changes on the stash and restores a clean working tree; git stash list shows the saved entry."
+
+# --- permissions ------------------------------------------------------------
+
+- id: script-permissions
+  command: |-
+    ls -l app/scripts
+  category: permissions
+  difficulty: easy
+  explanation: "The first column shows file type and permission bits; rwxr-xr-x means executable for everyone."
+
+- id: chmod-owner-only
+  command: |-
+    chmod 600 configs/app.yaml && ls -l configs/app.yaml
+  category: permissions
+  difficulty: easy
+  explanation: "Mode 600 grants read and write to the owner only, as recommended for files with secrets."
+
+- id: find-private-files
+  command: |-
+    find . -type f -perm 600 | sort
+  category: permissions
+  difficulty: medium
+  explanation: "Finds files whose mode is exactly 600, typically keys and secrets."
+
+- id: symbolic-chmod
+  command: |-
+    chmod u=rwx,g=rx,o= app/scripts/deploy.sh && stat -c '%A %n' app/scripts/deploy.sh
+  category: permissions
+  difficulty: medium
+  explanation: "Sets permissions per class in symbolic notation, removing all access for others."
+
+- id: umask-new-file
+  command: |-
+    umask 077 && touch secret.txt && stat -c '%a %n' secret.txt
+  category: permissions
+  difficulty: hard
+  explanation: "umask removes bits from the default mode of new files; 077 makes them private to the owner."
+
+- id: recursive-lockdown
+  command: |-
+    chmod -R go-rwx configs && find configs -exec stat -c '%a %n' {} + | sort -k2
+  category: permissions
+  difficulty: hard
+  explanation: "Recursively removes all group and other permissions, then prints the octal mode of every entry."
+
+# --- disk -------------------------------------------------------------------
+
+- id: disk-free
+  command: |-
+    df -h
+  category: disk
+  difficulty: easy
+  deterministic: false
+  explanation: "Shows size, usage and free space of all mounted filesystems in human-readable units."
+
+- id: cache-size
+  command: |-
+    du -sh cache
+  category: disk
+  difficulty: easy
+  explanation: "Summarizes the disk usage of a directory in human-readable units."
+
+- id: largest-cache-files
+  command: |-
+    ls -lhS cache | head -n 4
+  category: disk
+  difficulty: easy
+  explanation: "Lists files sorted by size, largest first, with human-readable sizes."
+
+- id: dir-sizes-sorted
+  command: |-
+    du -h --max-depth=1 --exclude=.git . | sort -h
+  category: disk
+  difficulty: medium
+  explanation: "Shows the size of each top-level directory; sort -h understands units like K and M."
+
+- id: find-big-files
+  command: |-
+    find cache -type f -size +100k -exec ls -lh {} +
+  category: disk
+  difficulty: medium
+  explanation: "Finds files larger than 100 KiB and lists them in a single ls call thanks to -exec ... {} +."
+
+- id: largest-files
+  command: |-
+    find . -type f -not -path './.git/*' -printf '%s\t%p\n' | sort -rn | head -5
+  category: disk
+  difficulty: hard
+  explanation: "Prints size in bytes and path of every file with find -printf and shows the five largest."
+
+# --- process ----------------------------------------------------------------
+
+- id: process-list
+  command: |-
+    ps aux
+  category: process
+  difficulty: easy
+  deterministic: false
+  explanation: "Lists all processes with owner, CPU and memory usage and the full command line."
+
+- id: pid-one
+  command: |-
+    ps -o pid,comm -p 1
+  category: process
+  difficulty: easy
+  explanation: "Shows which program runs as PID 1, here the container's init process."
+
+- id: timeout-exit-code
+  command: |-
+    timeout 1 sleep 5; echo "exit code: $?"
+  category: process
+  difficulty: medium
+  explanation: "timeout kills a command that runs too long and then exits with status 124."
+
+- id: kill-background-job
+  command: |-
+    sleep 30 & kill $! && echo "background job stopped"
+  category: process
+  difficulty: medium
+  explanation: "& starts a job in the background; $! holds its PID, which kill uses to terminate it."
+
+- id: parallel-xargs
+  command: |-
+    seq 3 | xargs -P 3 -I{} sh -c 'sleep 0.{}; echo "job {} done"'
+  category: process
+  difficulty: hard
+  compare: { ignore_order: true }
+  explanation: "xargs -P runs up to three commands in parallel, one per input line."
+
+- id: trap-signal
+  command: |-
+    trap 'echo "caught SIGTERM"' TERM; kill -TERM $$; echo "still running"
+  category: process
+  difficulty: hard
+  explanation: "trap installs a signal handler, so the shell survives a SIGTERM sent to itself ($$ is its PID)."
+
+# --- network-config ---------------------------------------------------------
+
+- id: show-hosts
+  command: |-
+    cat configs/hosts
+  category: network-config
+  difficulty: easy
+  explanation: "A hosts file maps IP addresses to host names before DNS is asked."
+
+- id: nginx-listen-ports
+  command: |-
+    grep -n listen configs/nginx.conf
+  category: network-config
+  difficulty: easy
+  explanation: "Shows the ports nginx listens on, with line numbers."
+
+- id: env-keys
+  command: |-
+    cut -d= -f1 configs/.env
+  category: network-config
+  difficulty: easy
+  explanation: "Lists the variable names of an env file without revealing the secret values."
+
+- id: proxy-targets
+  command: |-
+    grep -oE 'proxy_pass [^;]+' configs/nginx.conf | sort -u
+  category: network-config
+  difficulty: medium
+  explanation: "grep -o prints only the matching part, here the backends nginx forwards requests to."
+
+- id: upstream-block
+  command: |-
+    awk '/upstream/,/}/' configs/nginx.conf
+  category: network-config
+  difficulty: medium
+  explanation: "An awk range pattern prints everything from the upstream line to the next closing brace."
+
+- id: hosts-sorted-by-ip
+  command: |-
+    grep -Ev '^(#|$)' configs/hosts | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n
+  category: network-config
+  difficulty: hard
+  explanation: "Drops comments and blank lines, then sorts numerically by each octet of the IP address."
+
+# --- system -----------------------------------------------------------------
+
+- id: current-date
+  command: |-
+    date
+  category: system
+  difficulty: easy
+  deterministic: false
+  explanation: "Prints the current date and time in the configured time zone (UTC)."
+
+- id: system-uptime
+  command: |-
+    uptime
+  category: system
+  difficulty: easy
+  deterministic: false
+  explanation: "Shows how long the system has been running, logged-in users and the load averages."
+
+- id: memory-usage
+  command: |-
+    free -h
+  category: system
+  difficulty: easy
+  deterministic: false
+  explanation: "Shows total, used and available memory and swap in human-readable units."
+
+- id: user-at-host
+  command: |-
+    echo "$(whoami)@$(hostname)"
+  category: system
+  difficulty: easy
+  explanation: "Prints the current user and host name, like many shell prompts do."
+
+- id: epoch-to-date
+  command: |-
+    date -u -d @1741614936 '+%Y-%m-%d %H:%M:%S'
+  category: system
+  difficulty: medium
+  explanation: "Converts a Unix timestamp into a readable UTC date with a custom format."
+
+- id: active-cron-jobs
+  command: |-
+    grep -Ev '^(#|$)' configs/crontab
+  category: system
+  difficulty: medium
+  explanation: "Shows only the active cron entries by removing comments and blank lines."
+
+- id: login-users
+  command: |-
+    awk -F: '$3 >= 1000 && $3 < 65534 {print $1, $6, $7}' /etc/passwd
+  category: system
+  difficulty: hard
+  explanation: "Parses /etc/passwd with : as separator and prints name, home and shell of regular users (UID 1000 and up)."
