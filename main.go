@@ -46,7 +46,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	}
 	switch cmd {
 	case "play":
-		return fmt.Errorf("play %q: not implemented yet", args)
+		return runPlay(ctx, args, stderr)
 	case "verify":
 		return runVerify(ctx, args, stdout, stderr)
 	case "expected":
