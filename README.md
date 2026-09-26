@@ -201,7 +201,16 @@ make test-short   # unit tests only
 ```
 
 Integration tests talk to Docker and skip automatically without a daemon or
-the image (and with `-short`). The layout follows the Go module layout guide:
+the image (and with `-short`).
+
+CI (`.github/workflows/ci.yml`) runs `go vet` and `go test -race -short` on
+Linux, macOS and Windows for every push and pull request. Pushing a tag `v*`
+additionally creates a GitHub release with binaries for Linux, macOS and
+Windows (amd64 and arm64) and a `checksums.txt`, once the tests pass.
+`shast -version` prints the tag for release builds, the Go module version
+from the build info otherwise, and `dev` as a last resort.
+
+The layout follows the Go module layout guide:
 
 ```
 main.go, cmd_*.go     subcommands: play (default), verify, expected, image build
