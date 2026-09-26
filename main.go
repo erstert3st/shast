@@ -7,17 +7,20 @@
 //	shast [play] [flags]    start the game (default)
 //	shast verify [flags]    verify every catalog command against the sandbox
 //	shast expected [flags]  generate expected outputs for deterministic commands
-//	shast image build       build the sandbox image
+//	shast image build       build the sandbox image (--no-cache to rebuild)
 package main
 
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"shast/internal/sandbox"
 )
 
 var errUsage = errors.New("usage error")
@@ -40,7 +43,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 		cmd, args = args[0], args[1:]
 	}
 	switch cmd {
-	case "play", "verify", "expected", "image":
+	case "image":
+		return runImage(ctx, args, stdout, stderr)
+	case "play", "verify", "expected":
 		return fmt.Errorf("%s %q: not implemented yet", cmd, args)
 	case "help":
 		usage(stdout)
@@ -57,6 +62,38 @@ func usage(w io.Writer) {
   shast [play] [flags]    start the game (default)
   shast verify [flags]    verify every catalog command against the sandbox
   shast expected [flags]  generate expected outputs for deterministic commands
-  shast image build       build the sandbox image
+  shast image build [--no-cache]
+                          build the sandbox image
 `)
+}
+
+func runImage(ctx context.Context, args []string, stdout, stderr io.Writer) error {
+	if len(args) == 0 || args[0] != "build" {
+		fmt.Fprintln(stderr, "usage: shast image build [--no-cache]")
+		return errUsage
+	}
+	fs := flag.NewFlagSet("image build", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	noCache := fs.Bool("no-cache", false, "build without cache and pull the base image again")
+	if err := fs.Parse(args[1:]); err != nil {
+		return errUsage
+	}
+	if fs.NArg() > 0 {
+		fmt.Fprintf(stderr, "image build: unexpected arguments %q\n", fs.Args())
+		return errUsage
+	}
+
+	docker, err := sandbox.Connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer docker.Close()
+
+	tag := sandbox.ImageTag()
+	fmt.Fprintf(stdout, "building %s\n", tag)
+	if err := docker.BuildImage(ctx, tag, *noCache, stdout); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "built %s\n", tag)
+	return nil
 }

@@ -1,0 +1,15 @@
+[user]
+	name = Dev Example
+	email = dev@shop.example
+[core]
+	pager = cat
+[color]
+	ui = never
+[safe]
+	directory = *
+[init]
+	defaultBranch = main
+[gc]
+	auto = 0
+[advice]
+	detachedHead = false

@@ -185,3 +185,12 @@ Fehlt das Image: „sandbox image shast-sandbox:<tag> not found – run `shast i
 - Keine Features über die Spec hinaus (siehe `CLAUDE.md`: KISS/YAGNI).
 - Scheitert ein Katalogbefehl, wird der Befehl oder die Seed-Datei geändert, nie die Isolation.
 - Commit-Messages enden mit der Co-Authored-By-Zeile aus der System-Attribution.
+
+## Abweichungen
+Anpassungen gegenüber dem Plan, die sich bei der Umsetzung als nötig erwiesen haben (jeweils die kleinste spec-konforme Änderung):
+
+- **Kein `tini`-Paket im Image (M4):** Der Container läuft mit `Init: true`. Docker startet dann sein eigenes `docker-init` (tini) als PID 1, ein zweites tini im Image wäre ungenutzt. `C.UTF-8` ist in trixie-slim bereits enthalten, deshalb fehlt auch `locales-all`.
+- **Seed-Determinismus-Test als Opt-in (M4):** Zwei `--no-cache`-Builds dauern jeweils ca. 45 s und brauchen Netz für apt. Deshalb läuft `TestSeedDeterministic` nur mit `SHAST_SEED_REBUILD=1` (`make seed-determinism`) und nicht bei jedem `make check`.
+- **Feste Git-Zeitstempel auch für Tag, Checkout und Reflog (M4):** Nicht nur Commits, auch das annotierte Tag, `git checkout` (Reflog) und `git init` bekommen feste `GIT_*_DATE`. Der Index wird per `git read-tree HEAD` ohne Stat-Daten neu aufgebaut, weil er sonst Inode und ctime des Builds enthält.
+- **apt aus snapshot.debian.org (M4):** Der gepinnte Digest allein fixiert die Tool-Versionen nicht, weil `apt-get update` den Live-Mirror nutzt (jq driftete in 8 Tagen von `+deb13u3` auf `+deb13u4`). Das Dockerfile schaltet deshalb auf das Snapshot-Datum um, das `debian.sources` des Base-Images nennt. Zusätzlich werden alle setuid/setgid-Bits im Image entfernt (Defense in Depth zu `no-new-privileges`).
+- **Golden-Manifest (M4):** `internal/sandbox/testdata/seed.sha256` ist committet. `TestSeedManifestGolden` vergleicht es bei jedem `make check` mit dem Image (Skip ohne Docker oder Image) und wird nach gewollten Seed-Änderungen mit `-update` neu geschrieben.
