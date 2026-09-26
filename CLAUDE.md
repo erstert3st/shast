@@ -37,7 +37,7 @@ use `runtime.GOOS` where behaviour differs). A pushed `v*` tag builds release bi
 
 Dependency direction: `main` (`main.go`, `cmd_*.go`) → `tui` / `verify` → `engine` → `catalog`,
 `outcmp`, `score`, `typing`; `sandbox` is used by `main`, `engine` (for `sandbox.Result`), `tui` and
-`verify`.
+`verify`; `cmdhelp` is used by `main` and `tui`.
 
 - **Subcommands** use stdlib `flag` with one `FlagSet` each (`parseFlags` rejects positional args).
   `main.openSandbox` (Connect → Preflight → Sweep) must succeed *before* the TUI takes the terminal, so
@@ -55,6 +55,14 @@ Dependency direction: `main` (`main.go`, `cmd_*.go`) → `tui` / `verify` → `e
   Decoding is strict (`KnownFields`), validation reports all problems at once, and an `expected/<id>.txt`
   without a matching ID is a load error. `--catalog DIR` overlays another catalog by ID (`Merge`).
   Adding a command needs no code change; see README "Adding commands" for the field reference.
+- **Command help** (`internal/cmdhelp`): `help.yaml` (embedded, strict decoding) describes every
+  command (`du`, `git log`) and option of the embedded catalog; `TestDefaultCoversCatalog` fails for a
+  missing entry. `Dict.Annotate` parses a command line with `mvdan.cc/sh/v3/syntax` and attributes
+  each option word to its command, including the nested commands of `xargs`, `timeout` and
+  `find -exec` (hard-coded in Go). Option keys: `-s` matches in clusters (`-sh`; the first unknown
+  letter starts a value, `-sd+`), `-type`/`--max-depth` match the whole word, `-NUM` matches `-5`.
+  The TUI shows the tool above and the options below the command while typing (Speed mode only; in
+  Reverse mode the command is the solution) and reserves `MaxOptions()` lines per round.
 - **Sandbox** (`internal/sandbox`): one long-lived container per game session, not per command.
   - The image is built from the embedded `image/` directory (Dockerfile, `seed.sh`, `gitconfig`); the tag
     is `shast-sandbox:<sha256 of that dir>[:12]`. Any edit there changes the tag, so the binary reports

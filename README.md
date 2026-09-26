@@ -67,7 +67,10 @@ All of it can be preselected with flags:
 Keys while typing: characters are checked one by one (green = correct,
 red = wrong, grey = pending). You may type on after a mistake and fix it with
 Backspace. **Enter only runs the command on an exact match.** Esc skips the
-round, Ctrl+C quits. While the command runs, ↑/↓/PgUp/PgDn scroll the output
+round, Ctrl+C quits. Above the command a line describes the tool at the cursor
+(`du  -- estimate file space usage`); below it the options are explained, like
+zsh completions: on the space before `-sh` and on its `-` both `-s` and `-h`,
+on `s` only `-s`, on `h` only `-h`. While the command runs, ↑/↓/PgUp/PgDn scroll the output
 and Esc stops the command (the round still counts); Enter continues to the
 next round.
 
@@ -128,6 +131,25 @@ non-interactive. Mark commands whose output changes between runs (`ps`,
 `date`, `uptime`, `free`, `df`, anything printing ctimes/atimes) as
 `deterministic: false`. If a command does not work against the seed, change
 the command or the seed — never the sandbox restrictions.
+
+While typing, the game explains the command and the option at the cursor.
+The texts live in [`internal/cmdhelp/help.yaml`](internal/cmdhelp/help.yaml),
+one entry per command or subcommand:
+
+```yaml
+du:
+  about: estimate file space usage
+  options:
+    -s: display only a total for each argument   # also matches clusters: -sh
+    --max-depth: print totals only for directories up to N levels deep
+git log:
+  about: show commit logs
+  options:
+    -NUM: limit the number of commits to output  # matches -5, -10, …
+```
+
+A new command needs an entry for its tool and every option it uses;
+`go test ./internal/cmdhelp` fails otherwise.
 
 After adding or changing commands in the embedded catalog:
 
