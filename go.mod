@@ -13,6 +13,7 @@ require (
 	github.com/moby/moby/api v1.56.0
 	github.com/moby/moby/client v0.6.0
 	go.yaml.in/yaml/v3 v3.0.5
+	mvdan.cc/sh/v3 v3.14.1
 )
 
 require (
