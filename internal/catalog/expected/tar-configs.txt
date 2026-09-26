@@ -1,0 +1,9 @@
+configs/
+configs/.env
+configs/app.yaml
+configs/crontab
+configs/hosts
+configs/nginx.conf
+configs/ssl/
+configs/ssl/server.crt
+configs/ssl/server.key

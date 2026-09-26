@@ -1,0 +1,3 @@
+app/scripts/backup.sh: 9 lines
+app/scripts/deploy.sh: 12 lines
+app/scripts/healthcheck.sh: 11 lines

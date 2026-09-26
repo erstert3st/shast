@@ -39,14 +39,20 @@ func main() {
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	cmd := "play"
-	if len(args) > 0 && len(args[0]) > 0 && args[0][0] != '-' {
+	if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
+		cmd, args = "help", nil
+	} else if len(args) > 0 && len(args[0]) > 0 && args[0][0] != '-' {
 		cmd, args = args[0], args[1:]
 	}
 	switch cmd {
+	case "play":
+		return fmt.Errorf("play %q: not implemented yet", args)
+	case "verify":
+		return runVerify(ctx, args, stdout, stderr)
+	case "expected":
+		return runExpected(ctx, args, stdout, stderr)
 	case "image":
 		return runImage(ctx, args, stdout, stderr)
-	case "play", "verify", "expected":
-		return fmt.Errorf("%s %q: not implemented yet", cmd, args)
 	case "help":
 		usage(stdout)
 		return nil
@@ -64,36 +70,41 @@ func usage(w io.Writer) {
   shast expected [flags]  generate expected outputs for deterministic commands
   shast image build [--no-cache]
                           build the sandbox image
+
+Run "shast play -h" (or any other command with -h) for its flags.
 `)
 }
 
-func runImage(ctx context.Context, args []string, stdout, stderr io.Writer) error {
-	if len(args) == 0 || args[0] != "build" {
-		fmt.Fprintln(stderr, "usage: shast image build [--no-cache]")
-		return errUsage
-	}
-	fs := flag.NewFlagSet("image build", flag.ContinueOnError)
-	fs.SetOutput(stderr)
-	noCache := fs.Bool("no-cache", false, "build without cache and pull the base image again")
-	if err := fs.Parse(args[1:]); err != nil {
-		return errUsage
+// parseFlags parses args into fs and rejects positional arguments. -h
+// prints the flags and ends the command successfully.
+func parseFlags(fs *flag.FlagSet, args []string) (help bool, err error) {
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return true, nil
+		}
+		return false, errUsage
 	}
 	if fs.NArg() > 0 {
-		fmt.Fprintf(stderr, "image build: unexpected arguments %q\n", fs.Args())
-		return errUsage
+		fmt.Fprintf(fs.Output(), "%s: unexpected arguments %q\n", fs.Name(), fs.Args())
+		return false, errUsage
 	}
+	return false, nil
+}
 
+// openSandbox connects to Docker, checks that the sandbox image exists and
+// removes containers left behind by earlier, crashed runs.
+func openSandbox(ctx context.Context) (*sandbox.Docker, error) {
 	docker, err := sandbox.Connect(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer docker.Close()
-
-	tag := sandbox.ImageTag()
-	fmt.Fprintf(stdout, "building %s\n", tag)
-	if err := docker.BuildImage(ctx, tag, *noCache, stdout); err != nil {
-		return err
+	if err := docker.Preflight(ctx); err != nil {
+		docker.Close()
+		return nil, err
 	}
-	fmt.Fprintf(stdout, "built %s\n", tag)
-	return nil
+	if err := docker.Sweep(ctx); err != nil {
+		docker.Close()
+		return nil, err
+	}
+	return docker, nil
 }

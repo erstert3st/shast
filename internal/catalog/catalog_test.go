@@ -576,3 +576,18 @@ func TestLoadWithOverlay(t *testing.T) {
 		}
 	})
 }
+
+// TestDefaultExpectedOutputs checks that the committed expected outputs
+// match the catalog: exactly the deterministic challenges have one
+// (regenerate with `shast expected`).
+func TestDefaultExpectedOutputs(t *testing.T) {
+	cs, err := catalog.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range cs {
+		if has := c.Expected != ""; has != c.Deterministic {
+			t.Errorf("%s: deterministic=%v but has expected output=%v", c.ID, c.Deterministic, has)
+		}
+	}
+}

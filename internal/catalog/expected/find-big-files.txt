@@ -1,0 +1,4 @@
+-rw-r--r-- 1 dev dev 512K Mar 13  2025 cache/assets.bin
+-rw-r--r-- 1 dev dev 2.0M Mar 15  2025 cache/geoip.bin
+-rw-r--r-- 1 dev dev 1.0M Mar 15  2025 cache/products.bin
+-rw-r--r-- 1 dev dev 256K Mar 13  2025 cache/templates.bin

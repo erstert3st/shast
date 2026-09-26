@@ -1,0 +1,5 @@
+2097152	./cache/geoip.bin
+1048576	./cache/products.bin
+524288	./cache/assets.bin
+262144	./cache/templates.bin
+65536	./cache/search-index.bin

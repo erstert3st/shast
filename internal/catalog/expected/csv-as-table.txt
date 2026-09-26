@@ -1,0 +1,6 @@
+id  name           email                        role   country  created_at  active
+1   Ben Wagner     ben.wagner1@shop.example     admin  DE       2024-02-25  true
+2   Anna Mueller   anna.mueller2@shop.example   dev    US       2024-07-03  true
+3   Nina Koch      nina.koch3@shop.example      admin  FR       2024-04-24  false
+4   Ivan Weber     ivan.weber4@shop.example     dev    US       2024-12-08  false
+5   Paula Richter  paula.richter5@shop.example  dev    CH       2024-06-16  true

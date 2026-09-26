@@ -1,0 +1,3 @@
+db01 32GB
+db02 32GB
+cache01 16GB

@@ -1,0 +1,6 @@
+2025-03-15T00:14:23Z WARN [api] slow query detected
+2025-03-15T00:16:30Z INFO [worker] user logged in
+2025-03-15T00:19:14Z INFO [db] request completed
+2025-03-15T00:20:17Z DEBUG [api] payload validated
+2025-03-15T00:20:50Z INFO [db] order created
+2025-03-15T00:22:57Z WARN [auth] disk usage above 80%

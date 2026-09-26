@@ -1,0 +1,5 @@
+releases
+releases/v2
+releases/v2/bin
+releases/v2/conf
+releases/v2/logs

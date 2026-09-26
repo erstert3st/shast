@@ -1,0 +1,6 @@
+restore
+restore/app
+restore/app/scripts
+restore/app/scripts/backup.sh
+restore/app/scripts/deploy.sh
+restore/app/scripts/healthcheck.sh

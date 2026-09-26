@@ -1,0 +1,10 @@
+lb01       10.0.1.10  lb
+web01      10.0.2.11  web
+web02      10.0.2.12  web
+web03      10.0.2.13  web
+db01       10.0.3.20  db
+db02       10.0.3.21  db
+cache01    10.0.4.30  cache
+worker01   10.0.5.40  worker
+worker02   10.0.5.41  worker
+staging01  10.0.9.90  web

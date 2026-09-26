@@ -1,0 +1,4 @@
+     66 DEBUG
+     35 ERROR
+    144 INFO
+     55 WARN

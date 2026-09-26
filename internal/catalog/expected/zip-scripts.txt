@@ -1,0 +1,9 @@
+Archive:  scripts.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  2025-03-15 18:00   app/scripts/
+      184  2025-03-12 16:48   app/scripts/healthcheck.sh
+      328  2025-03-12 16:48   app/scripts/deploy.sh
+      254  2025-03-12 16:48   app/scripts/backup.sh
+---------                     -------
+      766                     4 files

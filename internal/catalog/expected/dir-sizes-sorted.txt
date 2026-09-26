@@ -1,0 +1,8 @@
+8.0K	./tmp
+20K	./data
+28K	./configs
+48K	./app
+52K	./backups
+92K	./logs
+3.9M	./cache
+4.1M	.

@@ -1,0 +1,9 @@
+700 configs
+600 configs/.env
+600 configs/app.yaml
+600 configs/crontab
+600 configs/hosts
+600 configs/nginx.conf
+700 configs/ssl
+600 configs/ssl/server.crt
+600 configs/ssl/server.key

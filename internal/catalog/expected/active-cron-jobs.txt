@@ -1,0 +1,4 @@
+*/5 * * * *  /srv/shopapi/app/scripts/healthcheck.sh >/dev/null 2>&1
+15 2 * * *   /srv/shopapi/app/scripts/backup.sh
+0 3 * * 0    find /var/log/shopapi -name '*.gz' -mtime +30 -delete
+30 4 * * 1-5 /srv/shopapi/app/scripts/deploy.sh staging

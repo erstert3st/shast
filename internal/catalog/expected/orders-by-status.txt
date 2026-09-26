@@ -1,0 +1,4 @@
+{"status":"cancelled","count":4}
+{"status":"paid","count":18}
+{"status":"pending","count":7}
+{"status":"shipped","count":11}

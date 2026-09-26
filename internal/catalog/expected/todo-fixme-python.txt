@@ -1,0 +1,4 @@
+app/src/main.py:23:    # TODO: graceful shutdown on SIGTERM
+app/src/db.py:11:    # FIXME: pool_size is ignored, use psycopg_pool
+app/src/api/users.py:29:    # TODO: validate email format
+app/src/api/orders.py:21:    # FIXME: N+1 query for order items

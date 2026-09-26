@@ -1,0 +1,8 @@
+704b1cb (HEAD -> main, tag: v1.0.0) Add sample data
+4c2ca10 Fix order total rounding
+199fc83 Add deploy scripts and nginx config
+d5eec0e Add tests for users and orders
+14a6428 Add order API
+0860f5f Add user API
+a62f6cc Add Makefile and app config
+359818e Initial commit

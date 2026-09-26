@@ -1,0 +1,5 @@
+-- PostgreSQL database dump of shop, 2025-03-14
+INSERT INTO orders VALUES (1, 1, 'paid', 150.00);
+INSERT INTO orders VALUES (2, 33, 'paid', 259.82);
+INSERT INTO orders VALUES (3, 35, 'paid', 89.34);
+INSERT INTO orders VALUES (4, 47, 'paid', 247.96);

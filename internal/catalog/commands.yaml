@@ -252,6 +252,7 @@
     zip -qr scripts.zip app/scripts && unzip -l scripts.zip
   category: archive
   difficulty: medium
+  compare: { ignore_order: true } # entry order follows readdir order
   explanation: "Zips the scripts directory quietly and lists the archive with sizes and dates."
 
 - id: tar-pipe-copy

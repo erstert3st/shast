@@ -1,0 +1,9 @@
+127.0.0.1    localhost
+10.0.1.10    lb01.internal lb01
+10.0.2.11    web01.internal web01
+10.0.2.12    web02.internal web02
+10.0.2.13    web03.internal web03
+10.0.3.20    db01.internal db01
+10.0.3.21    db02.internal db02
+10.0.4.30    cache01.internal cache01
+10.0.5.40    worker01.internal worker01

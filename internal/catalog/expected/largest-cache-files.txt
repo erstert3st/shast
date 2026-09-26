@@ -1,0 +1,4 @@
+total 3.9M
+-rw-r--r-- 1 dev dev 2.0M Mar 15  2025 geoip.bin
+-rw-r--r-- 1 dev dev 1.0M Mar 15  2025 products.bin
+-rw-r--r-- 1 dev dev 512K Mar 13  2025 assets.bin

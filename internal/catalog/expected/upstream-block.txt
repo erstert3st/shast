@@ -1,0 +1,5 @@
+    upstream shopapi {
+        server 10.0.2.11:8080 max_fails=3;
+        server 10.0.2.12:8080 max_fails=3;
+        server 10.0.2.13:8080 backup;
+    }

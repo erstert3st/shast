@@ -1,0 +1,10 @@
+lb01
+web01
+web02
+web03
+db01
+db02
+cache01
+worker01
+worker02
+staging01

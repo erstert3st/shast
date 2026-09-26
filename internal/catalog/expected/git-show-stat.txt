@@ -1,0 +1,10 @@
+commit 704b1cbace1494bb75b440a48c424051bdbe0531 (HEAD -> main, tag: v1.0.0)
+Author: Dev Example <dev@shop.example>
+Date:   Fri Mar 14 10:15:00 2025 +0000
+
+    Add sample data
+
+ data/orders.json  | 42 ++++++++++++++++++++++++++++++++++++++++++
+ data/servers.json | 12 ++++++++++++
+ data/users.csv    | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 105 insertions(+)
