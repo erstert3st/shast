@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"shast/internal/catalog"
 )
 
 // fixture describes every option as "<tool> <option>", so the tests can see
@@ -223,5 +225,34 @@ func TestParse(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestDefaultCoversCatalog makes sure every command and option of the
+// embedded catalog is explained.
+func TestDefaultCoversCatalog(t *testing.T) {
+	d, err := Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cs, err := catalog.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range cs {
+		h := d.Annotate(c.Command)
+		if len(h.calls) == 0 {
+			t.Errorf("%s: %q does not parse", c.ID, c.Command)
+		}
+		for _, call := range h.calls {
+			if call.Name == "" {
+				t.Errorf("%s: no help for the command %q", c.ID, c.Command[call.Start:call.End])
+			}
+		}
+		for _, w := range h.words {
+			if len(w.items) == 0 {
+				t.Errorf("%s: no help for the option %q", c.ID, c.Command[w.start:w.end])
+			}
+		}
 	}
 }

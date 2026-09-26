@@ -137,14 +137,12 @@ func isOption(w *syntax.Word) bool {
 	return ok && strings.HasPrefix(lit.Value, "-") && w.Lit() != "-" && w.Lit() != "--"
 }
 
-// addWord adds the option word w of cmd; words without a known option are
-// left out.
+// addWord adds the option word w of cmd. A word without a known option has
+// no items, so it explains nothing.
 func (h *Help) addWord(w *syntax.Word, cmd Command) {
 	start, end := offset(w.Pos()), offset(w.End())
 	items := cmd.items(w.Parts[0].(*syntax.Lit).Value, start, end)
-	if len(items) > 0 {
-		h.words = append(h.words, word{start: start, end: end, items: items})
-	}
+	h.words = append(h.words, word{start: start, end: end, items: items})
 }
 
 // items splits an option word, whose leading literal is lit, into options:

@@ -1,2 +1,221 @@
+# Help shown while typing: one entry per command or subcommand ("git log").
+# "about" describes the command, "options" its options. Keys are options as
+# typed: "-s" matches in clusters (-sh), "--max-depth" and "-type" match the
+# whole word (with or without "=value"), "-NUM" matches numbers such as -5.
+# One line each, lower case, no trailing period. Texts follow --help (or the
+# man page) of the versions in the sandbox image.
+
+awk:
+  about: pattern scanning and text processing language
+  options:
+    -F: use the given input field separator
+bc:
+  about: arbitrary precision calculator language
+cat:
+  about: concatenate files and print on the standard output
+chmod:
+  about: change file mode bits
+  options:
+    -R: change files and directories recursively
+column:
+  about: columnate lists
+  options:
+    -t: create a table
+    -s: possible table delimiters
+cut:
+  about: remove sections from each line of files
+  options:
+    -d: use the given delimiter instead of TAB for field delimiter
+    -f: select only these fields
+date:
+  about: print or set the system date and time
+  options:
+    -u: print Coordinated Universal Time (UTC)
+    -d: display the given time instead of now
+df:
+  about: report file system space usage
+  options:
+    -h: print sizes in powers of 1024 (e.g., 1023M)
+diff:
+  about: compare files line by line
 du:
   about: estimate file space usage
+  options:
+    -s: display only a total for each argument
+    -h: print sizes in human readable format (e.g., 1K 234M 2G)
+    --max-depth: print totals only for directories up to N levels deep
+    --exclude: exclude files that match the pattern
+echo:
+  about: write arguments to the standard output
+find:
+  about: search for files in a directory hierarchy
+  options:
+    -type: file is of the given type (f regular file, d directory)
+    -newer: file was modified more recently than the given file
+    -not: true if the following expression is false
+    -path: file name matches the shell pattern
+    -name: base of file name matches the shell pattern
+    -perm: permission bits are exactly the given mode
+    -size: file uses N units of space (+N more, k KiB, M MiB)
+    -exec: run a command on the files found
+    -printf: print FORMAT, interpreting \ escapes and % directives
+free:
+  about: display amount of free and used memory in the system
+  options:
+    -h: show human-readable output
+git grep:
+  about: print lines matching a pattern in tracked files
+  options:
+    -n: show line numbers
+git log:
+  about: show commit logs
+  options:
+    --oneline: show each commit on a single line
+    --format: pretty-print the commits in the given format
+    --date: format dates as short, iso, relative, ...
+    -NUM: limit the number of commits to output
+git show:
+  about: show various types of objects
+  options:
+    --stat: generate a diffstat
+git stash:
+  about: stash the changes in a dirty working directory away
+git status:
+  about: show the working tree status
+  options:
+    --short: show status concisely
+grep:
+  about: print lines that match patterns
+  options:
+    -r: search directories recursively
+    -n: print line number with output lines
+    -i: ignore case distinctions in patterns and data
+    --include: search only files that match the glob
+    -E: patterns are extended regular expressions
+    -c: print only a count of matching lines per file
+    -l: print only names of files with matches
+    -Z: print a 0 byte after each file name
+    -o: show only the matching parts of lines
+    -v: select non-matching lines
+head:
+  about: output the first part of files
+  options:
+    -n: print the first N lines instead of the first 10
+    -NUM: print the first NUM lines (same as -n NUM)
+hostname:
+  about: show or set the system's host name
+jq:
+  about: command-line JSON processor
+  options:
+    -r: output strings without escapes and quotes
+    -c: compact instead of pretty-printed output
+kill:
+  about: send a signal to a job
+  options:
+    -TERM: send SIGTERM, the request to terminate
+ls:
+  about: list directory contents
+  options:
+    -l: use a long listing format
+    -A: do not list implied . and ..
+    -h: with -l, print sizes like 1K 234M 2G
+    -S: sort by file size, largest first
+mkdir:
+  about: make directories
+  options:
+    -p: no error if existing, make parent directories as needed
+paste:
+  about: merge lines of files
+  options:
+    -s: paste one file at a time instead of in parallel
+    -d: join with the given characters instead of TABs
+ps:
+  about: report a snapshot of the current processes
+  options:
+    -o: user-defined output format
+    -p: select processes by process id
+rm:
+  about: remove files or directories
+  options:
+    -r: remove directories and their contents recursively
+    -f: ignore nonexistent files and arguments, never prompt
+sed:
+  about: stream editor for filtering and transforming text
+  options:
+    -n: suppress automatic printing of pattern space
+    -i: edit files in place
+seq:
+  about: print a sequence of numbers
+sh:
+  about: command interpreter (shell)
+  options:
+    -c: read commands from the string argument
+sleep:
+  about: delay for a specified amount of time
+sort:
+  about: sort lines of text files
+  options:
+    -r: reverse the result of comparisons
+    -n: compare according to string numerical value
+    -h: compare human readable numbers (e.g., 2K 1G)
+    -u: output only the first of lines with equal keys
+    -t: use the given field separator instead of blanks
+    -k: sort by a key, a field range and type (e.g. 1,1n)
+stat:
+  about: display file or file system status
+  options:
+    -c: use the given format instead of the default
+tail:
+  about: output the last part of files
+  options:
+    -n: output the last N lines; -n +N starts at line N
+tar:
+  about: an archiving utility
+  options:
+    -c: create a new archive
+    -z: filter the archive through gzip
+    -f: use the given archive file (- for stdin/stdout)
+    -t: list the contents of an archive
+    -x: extract files from an archive
+    -C: change to the given directory first
+timeout:
+  about: run a command with a time limit
+touch:
+  about: change file timestamps
+trap:
+  about: trap signals and other events
+tree:
+  about: list contents of directories in a tree-like format
+  options:
+    -L: descend only N directory levels deep
+umask:
+  about: display or set file mode mask
+uniq:
+  about: report or omit repeated lines
+  options:
+    -c: prefix lines by the number of occurrences
+unzip:
+  about: list, test and extract compressed files in a ZIP archive
+  options:
+    -l: list files (short format)
+uptime:
+  about: tell how long the system has been running
+wc:
+  about: print newline, word, and byte counts for each file
+  options:
+    -l: print the newline counts
+whoami:
+  about: print effective user name
+xargs:
+  about: build and execute command lines from standard input
+  options:
+    -0: items are separated by a null, not whitespace
+    -P: run at most N processes at a time
+    -I: replace the given string in the command with each input line
+zcat:
+  about: decompress files to standard output
+zip:
+  about: package and compress (archive) files
+  options:
+    -q: quiet operation
+    -r: recurse into directories
