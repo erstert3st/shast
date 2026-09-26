@@ -23,6 +23,8 @@ var (
 	styleWarn       = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
 	styleError      = lipgloss.NewStyle().Foreground(lipgloss.Red).Bold(true)
 	styleExplain    = lipgloss.NewStyle().Italic(true)
+	styleHelpName   = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
+	styleHelpDesc   = lipgloss.NewStyle().Faint(true)
 )
 
 // visibleWidth is the display width of s without escape sequences.

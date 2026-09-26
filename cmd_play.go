@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"shast/internal/catalog"
+	"shast/internal/cmdhelp"
 	"shast/internal/engine"
 	"shast/internal/sandbox"
 	"shast/internal/score"
@@ -43,6 +44,10 @@ func runPlay(ctx context.Context, args []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
+	help, err := cmdhelp.Default()
+	if err != nil {
+		return err
+	}
 	scorePath, err := score.DefaultPath()
 	if err != nil {
 		return err
@@ -65,6 +70,7 @@ func runPlay(ctx context.Context, args []string, stderr io.Writer) error {
 		Defaults: settings,
 		Runner:   session,
 		Scores:   score.NewStore(scorePath),
+		Help:     help,
 	})
 }
 

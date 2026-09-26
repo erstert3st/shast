@@ -10,8 +10,10 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"shast/internal/catalog"
+	"shast/internal/cmdhelp"
 	"shast/internal/engine"
 	"shast/internal/sandbox"
 	"shast/internal/score"
@@ -511,4 +513,90 @@ func TestWrapHelpers(t *testing.T) {
 	if got := strings.Join(parts, "¦"); got != "ls -l ¦/var/log ¦| grep x" {
 		t.Errorf("wrapRunes = %q", got)
 	}
+}
+
+// newHelpHarness starts a round of "du -sh cache" with help texts.
+func newHelpHarness(t *testing.T, width, height int) *harness {
+	h := newHarness(t, defaults())
+	h.m.cfg.Catalog = []catalog.Challenge{{ID: "du", Command: "du -sh cache", Category: "disk",
+		Difficulty: catalog.Easy, Explanation: "Sums up the cache.", Deterministic: true}}
+	h.m.setup.catalog = h.m.cfg.Catalog
+	h.m.cfg.Help = cmdhelp.Dict{"du": {About: "estimate file space usage", Options: map[string]string{
+		"-s": "display only a total for each argument",
+		"-h": "print sizes in human readable format",
+	}}}
+	h.send(tea.WindowSizeMsg{Width: width, Height: height})
+	h.key("enter")
+	return h
+}
+
+func TestHelpWhileTyping(t *testing.T) {
+	const (
+		tool = "du  -- estimate file space usage"
+		optS = "-s  -- display only a total for each argument"
+		optH = "-h  -- print sizes in human readable format"
+	)
+	steps := []struct {
+		typed   string
+		want    []string
+		notWant []string
+	}{
+		{"", []string{tool}, []string{"-s  --", "-h  --"}},
+		{"du", []string{tool, optS, optH}, nil},            // space before -sh
+		{"du ", []string{tool, optS, optH}, nil},           // on the dash
+		{"du -", []string{tool, optS}, []string{"-h  --"}}, // on s
+		{"du -s", []string{tool, optH}, []string{"-s  --"}},
+		{"du -sh", []string{tool}, []string{"-s  --", "-h  --"}}, // space before cache
+	}
+	h := newHelpHarness(t, 80, 24)
+	r := &h.m.round
+	height := r.output.Height()
+	for _, st := range steps {
+		h.typeText(strings.TrimPrefix(st.typed, r.typing.Input()))
+		view := ansi.Strip(h.m.View().Content)
+		for _, w := range st.want {
+			if !strings.Contains(view, "  "+w) {
+				t.Errorf("typed %q: view lacks %q:\n%s", st.typed, w, view)
+			}
+		}
+		for _, w := range st.notWant {
+			if strings.Contains(view, w) {
+				t.Errorf("typed %q: view shows %q:\n%s", st.typed, w, view)
+			}
+		}
+		if got := r.output.Height(); got != height {
+			t.Errorf("typed %q: output height %d, want a stable %d", st.typed, got, height)
+		}
+		h.checkFits()
+	}
+
+	h.typeText(" cache")
+	h.settle(h.key("enter"))
+	if r.phase != phaseResult {
+		t.Fatalf("phase %d, want result", r.phase)
+	}
+	if view := ansi.Strip(h.m.View().Content); strings.Contains(view, "estimate file space usage") {
+		t.Errorf("help shown after the run:\n%s", view)
+	}
+	// The tool line and the two option lines go to the output.
+	if got := r.output.Height(); got != height+3 {
+		t.Errorf("output height %d after the run, want %d", got, height+3)
+	}
+	if got := h.runner.sizes[0].Height; got != uint(height+3) {
+		t.Errorf("command ran with height %d, want %d", got, height+3)
+	}
+	h.checkFits()
+}
+
+func TestHelpAtMinimumSize(t *testing.T) {
+	h := newHelpHarness(t, minWidth, minHeight)
+	h.typeText("du")
+	view := ansi.Strip(h.m.View().Content)
+	if !strings.Contains(view, "du  -- estimate") || !strings.Contains(view, "-s  -- display") {
+		t.Errorf("tool line or first option missing:\n%s", view)
+	}
+	if h.m.round.output.Height() < 1 {
+		t.Errorf("output height %d", h.m.round.output.Height())
+	}
+	h.checkFits()
 }

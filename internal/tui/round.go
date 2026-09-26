@@ -13,6 +13,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"shast/internal/catalog"
+	"shast/internal/cmdhelp"
 	"shast/internal/engine"
 	"shast/internal/outcmp"
 	"shast/internal/sandbox"
@@ -51,6 +52,10 @@ type roundModel struct {
 	hintAt    time.Time
 	stats     score.Round
 
+	help        cmdhelp.Help // of the command, shown while typing
+	toolLines   int          // lines reserved for the tool help (0 or 1)
+	optionLines int          // lines reserved for the option help
+
 	gen      int // identifies the current run; stale messages are dropped
 	stream   *stream
 	cancel   context.CancelFunc
@@ -76,6 +81,7 @@ func (r *roundModel) start(m *Model) tea.Cmd {
 	r.number = r.session.Round()
 	r.phase = phaseTyping
 	r.typing = typing.New(r.challenge.Command)
+	r.help = m.cfg.Help.Annotate(r.challenge.Command)
 	r.hint = ""
 	r.stats = score.Round{}
 	r.term = nil
@@ -290,8 +296,9 @@ func (r *roundModel) resize(m *Model) tea.Cmd {
 	}
 }
 
-// Layout: header, blank, target, blank, stats, separator, output,
-// separator, result (status + explanation), footer.
+// Layout: header, blank, [tool help], target, [option help], blank, stats,
+// separator, output, separator, result (status + explanation), footer. The
+// help lines exist only while typing.
 func (r *roundModel) targetWidth(m *Model) int { return max(1, m.width-4) }
 
 func (r *roundModel) explanationLines(m *Model) []string {
@@ -309,6 +316,14 @@ func (r *roundModel) layout(m *Model) {
 	}
 	targetLines := len(wrapRunes(r.targetRunes(), r.targetWidth(m)))
 	fixed := 1 + 1 + targetLines + 1 + 1 + 1 + 1 + 1 + len(r.explanationLines(m)) + 1
+	r.toolLines, r.optionLines = 0, 0
+	if r.phase == phaseTyping && m.cfg.Help != nil {
+		// The output keeps at least one line; the tool line comes first.
+		free := max(0, m.height-fixed-1)
+		r.toolLines = min(1, free)
+		r.optionLines = min(r.help.MaxOptions(), free-r.toolLines)
+		fixed += r.toolLines + r.optionLines
+	}
 	follow := r.output.AtBottom()
 	r.output.SetWidth(max(1, m.width))
 	r.output.SetHeight(max(1, m.height-fixed))
@@ -337,7 +352,14 @@ func (m *Model) viewRound() string {
 	var b strings.Builder
 	header := fmt.Sprintf("Round %d/%d · %s · %s", r.number, r.session.Total(), c.Category, c.Difficulty)
 	b.WriteString(styleTitle.Render(header) + "\n\n")
-	b.WriteString(r.renderTarget(m) + "\n\n")
+	if r.toolLines > 0 {
+		b.WriteString(r.renderToolHelp(m) + "\n")
+	}
+	b.WriteString(r.renderTarget(m) + "\n")
+	if r.optionLines > 0 {
+		b.WriteString(r.renderOptionHelp(m) + "\n")
+	}
+	b.WriteString("\n")
 	b.WriteString(r.renderStats(m) + "\n")
 	b.WriteString(separator("output", m.width) + "\n")
 	b.WriteString(r.output.View() + "\n")
@@ -382,6 +404,45 @@ func (r *roundModel) renderTarget(m *Model) string {
 		lines = append(lines, "  "+b.String())
 	}
 	return strings.Join(lines, "\n")
+}
+
+// cursor is the position of the next character to type.
+func (r *roundModel) cursor() int { return utf8.RuneCountInString(r.typing.Input()) }
+
+// renderToolHelp describes the command the cursor is in.
+func (r *roundModel) renderToolHelp(m *Model) string {
+	tool, ok := r.help.Tool(r.cursor())
+	if !ok {
+		return ""
+	}
+	return helpLine(tool.Name, len(tool.Name), tool.Desc, m.width)
+}
+
+// renderOptionHelp describes the options at the cursor, one per reserved
+// line; lines without an option stay empty.
+func (r *roundModel) renderOptionHelp(m *Model) string {
+	items := r.help.Options(r.cursor())
+	items = items[:min(len(items), r.optionLines)]
+	nameWidth := 0
+	for _, it := range items {
+		nameWidth = max(nameWidth, len(it.Name))
+	}
+	lines := make([]string, r.optionLines)
+	for i, it := range items {
+		lines[i] = helpLine(it.Name, nameWidth, it.Desc, m.width)
+	}
+	return strings.Join(lines, "\n")
+}
+
+// helpLine renders "name  -- description" like zsh completions, indented
+// like the target and cut to width.
+func helpLine(name string, nameWidth int, desc string, width int) string {
+	name = fmt.Sprintf("%-*s", nameWidth, name)
+	rest := "  -- " + desc
+	if avail := width - 2 - len(name); utf8.RuneCountInString(rest) > avail {
+		rest = truncate(rest, avail-1) + "…"
+	}
+	return "  " + styleHelpName.Render(name) + styleHelpDesc.Render(rest)
 }
 
 func (r *roundModel) renderStats(m *Model) string {

@@ -14,6 +14,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"shast/internal/catalog"
+	"shast/internal/cmdhelp"
 	"shast/internal/engine"
 	"shast/internal/sandbox"
 	"shast/internal/score"
@@ -49,6 +50,9 @@ type Config struct {
 	Defaults Settings // preselected in the setup screen (from CLI flags)
 	Runner   Runner
 	Scores   Scores
+	// Help explains the command and option at the cursor while typing;
+	// nil shows no help.
+	Help cmdhelp.Dict
 
 	// Now and NewSeed are replaceable for tests; nil means time.Now and
 	// rand.Uint64.
