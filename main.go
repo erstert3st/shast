@@ -8,6 +8,7 @@
 //	shast verify [flags]    verify every catalog command against the sandbox
 //	shast expected [flags]  generate expected outputs for deterministic commands
 //	shast image build       build the sandbox image (--no-cache to rebuild)
+//	shast -version          print the version
 package main
 
 import (
@@ -41,6 +42,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 	cmd := "play"
 	if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
 		cmd, args = "help", nil
+	} else if len(args) > 0 && (args[0] == "-version" || args[0] == "--version") {
+		cmd, args = "version", nil
 	} else if len(args) > 0 && len(args[0]) > 0 && args[0][0] != '-' {
 		cmd, args = args[0], args[1:]
 	}
@@ -53,6 +56,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) error {
 		return runExpected(ctx, args, stdout, stderr)
 	case "image":
 		return runImage(ctx, args, stdout, stderr)
+	case "version":
+		return runVersion(stdout)
 	case "help":
 		usage(stdout)
 		return nil
@@ -70,6 +75,7 @@ func usage(w io.Writer) {
   shast expected [flags]  generate expected outputs for deterministic commands
   shast image build [--no-cache]
                           build the sandbox image
+  shast -version          print the version
 
 Run "shast play -h" (or any other command with -h) for its flags.
 `)

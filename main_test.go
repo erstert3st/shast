@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"runtime/debug"
 	"strings"
 	"testing"
 
@@ -59,6 +60,8 @@ func TestRunDispatch(t *testing.T) {
 	}{
 		{args: []string{"help"}, stdout: "Usage:"},
 		{args: []string{"-h"}, stdout: "Usage:"},
+		{args: []string{"-version"}, stdout: "shast "},
+		{args: []string{"--version"}, stdout: "shast "},
 		{args: []string{"bogus"}, wantErr: errUsage, stderr: `unknown command "bogus"`},
 		{args: []string{"image"}, wantErr: errUsage, stderr: "usage: shast image build"},
 		{args: []string{"verify", "--runs", "0"}, wantErr: errUsage, stderr: "--runs must be at least 1"},
@@ -79,6 +82,31 @@ func TestRunDispatch(t *testing.T) {
 			}
 			if !strings.Contains(stderr.String(), tt.stderr) {
 				t.Errorf("stderr %q lacks %q", stderr.String(), tt.stderr)
+			}
+		})
+	}
+}
+
+func TestResolveVersion(t *testing.T) {
+	withVersion := func(v string) *debug.BuildInfo {
+		return &debug.BuildInfo{Main: debug.Module{Version: v}}
+	}
+	tests := []struct {
+		name    string
+		release string
+		info    *debug.BuildInfo
+		want    string
+	}{
+		{"release wins", "v1.2.3", withVersion("v1.0.0"), "v1.2.3"},
+		{"module version", "", withVersion("v0.0.0-20260926120000-51fed81abcde+dirty"), "v0.0.0-20260926120000-51fed81abcde+dirty"},
+		{"devel", "", withVersion("(devel)"), "dev"},
+		{"empty module version", "", withVersion(""), "dev"},
+		{"no build info", "", nil, "dev"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveVersion(tt.release, tt.info); got != tt.want {
+				t.Errorf("resolveVersion() = %q, want %q", got, tt.want)
 			}
 		})
 	}
