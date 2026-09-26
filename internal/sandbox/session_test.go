@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -57,16 +59,24 @@ func TestCapWriter(t *testing.T) {
 }
 
 func TestProcessAlive(t *testing.T) {
-	cmd := exec.Command("true")
+	// The test binary itself, running no tests: an exited process on every OS.
+	cmd := exec.Command(os.Args[0], "-test.run=^$")
 	if err := cmd.Run(); err != nil {
 		t.Fatal(err)
+	}
+	// Alive, but not ours (EPERM / access denied): init on Unix, System on
+	// Windows.
+	foreign := "1"
+	if runtime.GOOS == "windows" {
+		foreign = "4"
 	}
 	tests := []struct {
 		pid  string
 		want bool
 	}{
 		{strconv.Itoa(cmd.Process.Pid), false},
-		{"1", true}, // init: alive, but not ours (EPERM)
+		{strconv.Itoa(os.Getpid()), true},
+		{foreign, true},
 		{"", false},
 		{"abc", false},
 		{"-5", false},

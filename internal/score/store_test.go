@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"slices"
 	"testing"
 	"time"
@@ -202,7 +203,8 @@ func TestAddFileMode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := info.Mode().Perm(); got != 0o644 {
+	// Windows has no Unix permission bits.
+	if got := info.Mode().Perm(); got != 0o644 && runtime.GOOS != "windows" {
 		t.Errorf("file mode = %v, want 0644", got)
 	}
 	names, err := os.ReadDir(dir)
@@ -251,6 +253,7 @@ func TestRoundTrip(t *testing.T) {
 
 func TestDefaultPath(t *testing.T) {
 	home := t.TempDir()
+	xdg := t.TempDir() // absolute on every OS
 	tests := []struct {
 		name string
 		xdg  string
@@ -258,8 +261,8 @@ func TestDefaultPath(t *testing.T) {
 	}{
 		{
 			name: "xdg set",
-			xdg:  "/xdg/data",
-			want: "/xdg/data/shast/scores.json",
+			xdg:  xdg,
+			want: filepath.Join(xdg, "shast", "scores.json"),
 		},
 		{
 			name: "xdg relative ignored",
@@ -274,6 +277,7 @@ func TestDefaultPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("HOME", home)
+			t.Setenv("USERPROFILE", home) // os.UserHomeDir on Windows
 			t.Setenv("XDG_DATA_HOME", tt.xdg)
 			got, err := DefaultPath()
 			if err != nil {

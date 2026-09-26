@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"runtime"
 	"strconv"
 	"sync"
 	"syscall"
@@ -548,6 +549,14 @@ func processAlive(pid string) bool {
 		return false
 	}
 	p, err := os.FindProcess(n)
+	if runtime.GOOS == "windows" {
+		// FindProcess opens the process there, which fails if it does not
+		// exist; Signal only supports Kill.
+		if err == nil {
+			p.Release()
+		}
+		return err == nil || errors.Is(err, os.ErrPermission)
+	}
 	if err != nil {
 		return false
 	}

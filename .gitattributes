@@ -1,0 +1,4 @@
+# LF on every OS: the embedded sandbox context (seed.sh, Dockerfile) runs in
+# bash and is hashed into the image tag, so a CRLF checkout on Windows would
+# break the image and change its tag.
+* text=auto eol=lf
